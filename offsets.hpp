@@ -2,9 +2,14 @@
 // Dumped at: 2026-03-11 20:14:48
 // Total FFlags: 25,025
 
-#pragma once
+namespace FFlagOffsets
+{
+    uintptr_t FFlagList = 0x7E60438;
+    uintptr_t ValueGetSet = 0x30;
+    uintptr_t FlagToValue = 0xC0;
+}
 
-namespace FFlags 
+namespace FFlags
 
 {
     inline uintptr_t 9SliceEditorAnalyticsReportingHundrethsPercent = 0x5cc09f0;
