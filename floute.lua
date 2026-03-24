@@ -1,6 +1,5 @@
 -- ============================================================
--- XZuyaX Hub - Merged Version (No Key System)
--- UI Library + Main Script Combined
+-- XZuyaX Hub - Merged (No Key, Fixed ZIndex)
 -- ============================================================
 
 --[[
@@ -40,23 +39,23 @@ local IsTablet = IsMobile and (workspace.CurrentCamera.ViewportSize.X > 600)
 
 
 local ZIndex = {
-    Base = 1,
-    Sidebar = 5,
-    Content = 10,
-    Topbar = 15,
-    Controls = 20,
-    Tabs = 25,
-    Elements = 30,
-    Dropdowns = 100,
-    Tooltips = 200,
-    Search = 500,
-    Settings = 600,
-    Profile = 700,
-    Overlays = 1000,
-    Notifications = 1500,
-    Modals = 2000,
+    Base = 10000,
+    Sidebar = 10005,
+    Content = 10010,
+    Topbar = 10015,
+    Controls = 10020,
+    Tabs = 10025,
+    Elements = 10030,
+    Dropdowns = 10100,
+    Tooltips = 10200,
+    Search = 10500,
+    Settings = 10600,
+    Profile = 10700,
+    Overlays = 11000,
+    Notifications = 11500,
+    Modals = 12000,
 
-    Cursor = 3000
+    Cursor = 13000
 }
 
 
@@ -30771,7 +30770,7 @@ Xan.AntiDetect = Xan.EnableGhostMode
 _G.Xan = Xan
 
 
--- UI Library loaded, Xan is now available
+-- UI Library loaded
 
 
 
@@ -30789,7 +30788,6 @@ local CoreGui = game:GetService("CoreGui")
 
 local DISCORD_URL = "https://discord.gg/X4H7phPu8P"
 
--- Device Detection
 local device = "PC"
 if UIS.TouchEnabled and not UIS.KeyboardEnabled then
     device = "Mobile"
@@ -30797,34 +30795,22 @@ elseif UIS.GamepadEnabled then
     device = "Console"
 end
 
--- Executor Detection
 local executor = "Unknown"
-if identifyexecutor then
-    executor = identifyexecutor()
-elseif syn then
-    executor = "Synapse X"
-elseif KRNL_LOADED then
-    executor = "Krnl"
-elseif fluxus then
-    executor = "Fluxus"
-elseif is_sirhurt_closure then
-    executor = "SirHurt"
-elseif OXYGEN then
-    executor = "Oxygen U"
-elseif Delta then
-    executor = "Delta"
-elseif Codex then
-    executor = "Codex"
-end
+if identifyexecutor then executor = identifyexecutor()
+elseif syn then executor = "Synapse X"
+elseif KRNL_LOADED then executor = "Krnl"
+elseif fluxus then executor = "Fluxus"
+elseif is_sirhurt_closure then executor = "SirHurt"
+elseif OXYGEN then executor = "Oxygen U"
+elseif Delta then executor = "Delta"
+elseif Codex then executor = "Codex" end
 
--- Game Name
 local gameName = "Unknown"
 pcall(function()
     local info = MarketplaceService:GetProductInfo(game.PlaceId)
     if info and info.Name then gameName = info.Name end
 end)
 
--- Use the UI Library (Xan is already loaded above)
 local UI = Xan
 
 function CreateMainWindow()
@@ -31421,10 +31407,9 @@ Join discord for more information!
     BallTab:AddSection("Ball Hacks")
 
     local fbHitbox       = nil
-    local hitboxVisible  = false
+    local rgbOn          = false
     local hitboxSz       = 2.5
     local hitboxInterval = 1
-    local visualBubble   = nil
 
     local function findHitbox()
         if fbHitbox and fbHitbox.Parent and fbHitbox:IsDescendantOf(game.Workspace) then
@@ -31445,138 +31430,18 @@ Join discord for more information!
         return nil
     end
 
-    local function createVisualBubble()
-        if visualBubble then pcall(function() visualBubble:Destroy() end) end
-        local hb = findHitbox()
-        if not hb then return end
-        
-        visualBubble = Instance.new("Part")
-        visualBubble.Name = "HitboxVisual"
-        visualBubble.Anchored = true
-        visualBubble.CanCollide = false
-        visualBubble.Shape = Enum.PartType.Ball
-        visualBubble.Material = Enum.Material.ForceField
-        visualBubble.Color = Color3.fromRGB(100, 200, 255)
-        visualBubble.Transparency = 0.7
-        visualBubble.Size = Vector3.new(hitboxSz, hitboxSz, hitboxSz)
-        visualBubble.Parent = workspace
-        
-        task.spawn(function()
-            while visualBubble and visualBubble.Parent and hitboxVisible do
-                local hb = findHitbox()
-                if hb then
-                    visualBubble.CFrame = hb.CFrame
-                    visualBubble.Size = Vector3.new(hitboxSz, hitboxSz, hitboxSz)
-                end
-                task.wait()
-            end
-        end)
-    end
-
-    local function toggleVisual(state)
-        hitboxVisible = state
-        if state then
-            createVisualBubble()
-        else
-            if visualBubble then
-                pcall(function() visualBubble:Destroy() end)
-                visualBubble = nil
-            end
-        end
-    end
-
     local function updateHitbox()
         local hb = findHitbox()
         if hb then
-            hb.Size = Vector3.new(hitboxSz, hitboxSz, hitboxSz)
-            hb.Transparency = 1
-            hb.CanCollide = true
-        end
-        if hitboxVisible and visualBubble then
-            visualBubble.Size = Vector3.new(hitboxSz, hitboxSz, hitboxSz)
+            hb.Size        = Vector3.new(hitboxSz, hitboxSz, hitboxSz)
+            hb.Transparency = rgbOn and 0.8 or 0.5
+            hb.Material    = rgbOn and Enum.Material.Neon or Enum.Material.ForceField
         end
     end
 
     BallTab:AddSlider("Ball Expander", {
         Min = 1, Max = 25, Default = 2.5, Increment = 0.1, Flag = "ball_expander"
     }, function(v) hitboxSz = v; updateHitbox() end)
-
-    -- Presets avec keybinds
-    BallTab:AddSection("Quick Presets")
-    
-    local preset1 = 5
-    local preset2 = 10
-    local preset3 = 15
-    local preset1Key = Enum.KeyCode.One
-    local preset2Key = Enum.KeyCode.Two
-    local preset3Key = Enum.KeyCode.Three
-    local toggleVisualKey = Enum.KeyCode.V
-
-    BallTab:AddInput("Preset 1 Size", {
-        Default = "5", Placeholder = "Enter size", Flag = "Preset1Size"
-    }, function(txt)
-        preset1 = tonumber(txt) or 5
-        UI.Success("Preset 1", "Size set to: " .. preset1)
-    end)
-
-    BallTab:AddKeybind("Preset 1 Keybind", {
-        Default = Enum.KeyCode.One, Flag = "Preset1Key"
-    }, function(key)
-        preset1Key = key
-    end)
-
-    BallTab:AddInput("Preset 2 Size", {
-        Default = "10", Placeholder = "Enter size", Flag = "Preset2Size"
-    }, function(txt)
-        preset2 = tonumber(txt) or 10
-        UI.Success("Preset 2", "Size set to: " .. preset2)
-    end)
-
-    BallTab:AddKeybind("Preset 2 Keybind", {
-        Default = Enum.KeyCode.Two, Flag = "Preset2Key"
-    }, function(key)
-        preset2Key = key
-    end)
-
-    BallTab:AddInput("Preset 3 Size", {
-        Default = "15", Placeholder = "Enter size", Flag = "Preset3Size"
-    }, function(txt)
-        preset3 = tonumber(txt) or 15
-        UI.Success("Preset 3", "Size set to: " .. preset3)
-    end)
-
-    BallTab:AddKeybind("Preset 3 Keybind", {
-        Default = Enum.KeyCode.Three, Flag = "Preset3Key"
-    }, function(key)
-        preset3Key = key
-    end)
-
-    BallTab:AddKeybind("Toggle Visual Bubble", {
-        Default = Enum.KeyCode.V, Flag = "ToggleVisualKey"
-    }, function(key)
-        toggleVisualKey = key
-    end)
-
-    -- Keybind listeners
-    UIS.InputBegan:Connect(function(input, gameProcessed)
-        if gameProcessed then return end
-        if input.KeyCode == preset1Key then
-            hitboxSz = preset1
-            updateHitbox()
-            UI.Success("Preset 1", "Ball size: " .. preset1)
-        elseif input.KeyCode == preset2Key then
-            hitboxSz = preset2
-            updateHitbox()
-            UI.Success("Preset 2", "Ball size: " .. preset2)
-        elseif input.KeyCode == preset3Key then
-            hitboxSz = preset3
-            updateHitbox()
-            UI.Success("Preset 3", "Ball size: " .. preset3)
-        elseif input.KeyCode == toggleVisualKey then
-            toggleVisual(not hitboxVisible)
-            UI.Success("Visual Bubble", hitboxVisible and "ON" or "OFF")
-        end
-    end)
 
     task.spawn(function()
         while true do
@@ -32717,5 +32582,4 @@ end)
 })
 end
 
--- Auto-start the hub
 CreateMainWindow()
