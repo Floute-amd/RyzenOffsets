@@ -31421,9 +31421,10 @@ Join discord for more information!
     BallTab:AddSection("Ball Hacks")
 
     local fbHitbox       = nil
-    local rgbOn          = false
+    local hitboxVisible  = false
     local hitboxSz       = 2.5
     local hitboxInterval = 1
+    local visualBubble   = nil
 
     local function findHitbox()
         if fbHitbox and fbHitbox.Parent and fbHitbox:IsDescendantOf(game.Workspace) then
@@ -31444,18 +31445,138 @@ Join discord for more information!
         return nil
     end
 
+    local function createVisualBubble()
+        if visualBubble then pcall(function() visualBubble:Destroy() end) end
+        local hb = findHitbox()
+        if not hb then return end
+        
+        visualBubble = Instance.new("Part")
+        visualBubble.Name = "HitboxVisual"
+        visualBubble.Anchored = true
+        visualBubble.CanCollide = false
+        visualBubble.Shape = Enum.PartType.Ball
+        visualBubble.Material = Enum.Material.ForceField
+        visualBubble.Color = Color3.fromRGB(100, 200, 255)
+        visualBubble.Transparency = 0.7
+        visualBubble.Size = Vector3.new(hitboxSz, hitboxSz, hitboxSz)
+        visualBubble.Parent = workspace
+        
+        task.spawn(function()
+            while visualBubble and visualBubble.Parent and hitboxVisible do
+                local hb = findHitbox()
+                if hb then
+                    visualBubble.CFrame = hb.CFrame
+                    visualBubble.Size = Vector3.new(hitboxSz, hitboxSz, hitboxSz)
+                end
+                task.wait()
+            end
+        end)
+    end
+
+    local function toggleVisual(state)
+        hitboxVisible = state
+        if state then
+            createVisualBubble()
+        else
+            if visualBubble then
+                pcall(function() visualBubble:Destroy() end)
+                visualBubble = nil
+            end
+        end
+    end
+
     local function updateHitbox()
         local hb = findHitbox()
         if hb then
-            hb.Size        = Vector3.new(hitboxSz, hitboxSz, hitboxSz)
-            hb.Transparency = rgbOn and 0.8 or 0.5
-            hb.Material    = rgbOn and Enum.Material.Neon or Enum.Material.ForceField
+            hb.Size = Vector3.new(hitboxSz, hitboxSz, hitboxSz)
+            hb.Transparency = 1
+            hb.CanCollide = true
+        end
+        if hitboxVisible and visualBubble then
+            visualBubble.Size = Vector3.new(hitboxSz, hitboxSz, hitboxSz)
         end
     end
 
     BallTab:AddSlider("Ball Expander", {
         Min = 1, Max = 25, Default = 2.5, Increment = 0.1, Flag = "ball_expander"
     }, function(v) hitboxSz = v; updateHitbox() end)
+
+    -- Presets avec keybinds
+    BallTab:AddSection("Quick Presets")
+    
+    local preset1 = 5
+    local preset2 = 10
+    local preset3 = 15
+    local preset1Key = Enum.KeyCode.One
+    local preset2Key = Enum.KeyCode.Two
+    local preset3Key = Enum.KeyCode.Three
+    local toggleVisualKey = Enum.KeyCode.V
+
+    BallTab:AddInput("Preset 1 Size", {
+        Default = "5", Placeholder = "Enter size", Flag = "Preset1Size"
+    }, function(txt)
+        preset1 = tonumber(txt) or 5
+        UI.Success("Preset 1", "Size set to: " .. preset1)
+    end)
+
+    BallTab:AddKeybind("Preset 1 Keybind", {
+        Default = Enum.KeyCode.One, Flag = "Preset1Key"
+    }, function(key)
+        preset1Key = key
+    end)
+
+    BallTab:AddInput("Preset 2 Size", {
+        Default = "10", Placeholder = "Enter size", Flag = "Preset2Size"
+    }, function(txt)
+        preset2 = tonumber(txt) or 10
+        UI.Success("Preset 2", "Size set to: " .. preset2)
+    end)
+
+    BallTab:AddKeybind("Preset 2 Keybind", {
+        Default = Enum.KeyCode.Two, Flag = "Preset2Key"
+    }, function(key)
+        preset2Key = key
+    end)
+
+    BallTab:AddInput("Preset 3 Size", {
+        Default = "15", Placeholder = "Enter size", Flag = "Preset3Size"
+    }, function(txt)
+        preset3 = tonumber(txt) or 15
+        UI.Success("Preset 3", "Size set to: " .. preset3)
+    end)
+
+    BallTab:AddKeybind("Preset 3 Keybind", {
+        Default = Enum.KeyCode.Three, Flag = "Preset3Key"
+    }, function(key)
+        preset3Key = key
+    end)
+
+    BallTab:AddKeybind("Toggle Visual Bubble", {
+        Default = Enum.KeyCode.V, Flag = "ToggleVisualKey"
+    }, function(key)
+        toggleVisualKey = key
+    end)
+
+    -- Keybind listeners
+    UIS.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
+        if input.KeyCode == preset1Key then
+            hitboxSz = preset1
+            updateHitbox()
+            UI.Success("Preset 1", "Ball size: " .. preset1)
+        elseif input.KeyCode == preset2Key then
+            hitboxSz = preset2
+            updateHitbox()
+            UI.Success("Preset 2", "Ball size: " .. preset2)
+        elseif input.KeyCode == preset3Key then
+            hitboxSz = preset3
+            updateHitbox()
+            UI.Success("Preset 3", "Ball size: " .. preset3)
+        elseif input.KeyCode == toggleVisualKey then
+            toggleVisual(not hitboxVisible)
+            UI.Success("Visual Bubble", hitboxVisible and "ON" or "OFF")
+        end
+    end)
 
     task.spawn(function()
         while true do
