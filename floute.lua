@@ -31438,7 +31438,7 @@ Join discord for more information!
         end
     end
 
-    BallTab:AddSlider("Ball Expander", {
+    local ballExpanderSlider = BallTab:AddSlider("Ball Expander", {
         Min = 1, Max = 25, Default = 2.5, Increment = 0.1, Flag = "ball_expander"
     }, function(v) hitboxSz = v; updateHitbox() end)
 
@@ -31495,17 +31495,11 @@ Join discord for more information!
     UIS.InputBegan:Connect(function(input, gameProcessed)
         if gameProcessed then return end
         if input.KeyCode == preset1Key then
-            hitboxSz = preset1
-            updateHitbox()
-            UI.Success("Preset 1", "Ball hitbox: " .. preset1)
+            UI:SetSliderValue("ball_expander", preset1)
         elseif input.KeyCode == preset2Key then
-            hitboxSz = preset2
-            updateHitbox()
-            UI.Success("Preset 2", "Ball hitbox: " .. preset2)
+            UI:SetSliderValue("ball_expander", preset2)
         elseif input.KeyCode == preset3Key then
-            hitboxSz = preset3
-            updateHitbox()
-            UI.Success("Preset 3", "Ball hitbox: " .. preset3)
+            UI:SetSliderValue("ball_expander", preset3)
         end
     end)
 
