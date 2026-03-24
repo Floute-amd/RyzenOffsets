@@ -1,5 +1,6 @@
 -- ============================================================
--- XZuyaX Hub - Merged (No Key, Fixed ZIndex)
+-- XZuyaX Hub - Merged Version (No Key System)
+-- UI Library + Main Script Combined
 -- ============================================================
 
 --[[
@@ -39,23 +40,23 @@ local IsTablet = IsMobile and (workspace.CurrentCamera.ViewportSize.X > 600)
 
 
 local ZIndex = {
-    Base = 10000,
-    Sidebar = 10005,
-    Content = 10010,
-    Topbar = 10015,
-    Controls = 10020,
-    Tabs = 10025,
-    Elements = 10030,
-    Dropdowns = 10100,
-    Tooltips = 10200,
-    Search = 10500,
-    Settings = 10600,
-    Profile = 10700,
-    Overlays = 11000,
-    Notifications = 11500,
-    Modals = 12000,
+    Base = 1,
+    Sidebar = 5,
+    Content = 10,
+    Topbar = 15,
+    Controls = 20,
+    Tabs = 25,
+    Elements = 30,
+    Dropdowns = 100,
+    Tooltips = 200,
+    Search = 500,
+    Settings = 600,
+    Profile = 700,
+    Overlays = 1000,
+    Notifications = 1500,
+    Modals = 2000,
 
-    Cursor = 13000
+    Cursor = 3000
 }
 
 
@@ -1339,7 +1340,7 @@ function CrosshairEngine.CreateGuiCrosshair()
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = Xan.GhostMode and Util.GenerateRandomString(14) or "XanBar_Crosshair"
     screenGui.ResetOnSpawn = false
-    screenGui.DisplayOrder = 50
+    screenGui.DisplayOrder = 999999
     screenGui.IgnoreGuiInset = true
     screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     
@@ -3119,7 +3120,7 @@ function WindowBuilders.CreateScreenGui(title)
         Name = guiName,
         ResetOnSpawn = false,
         ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
-        DisplayOrder = 100,
+        DisplayOrder = 500,
         IgnoreGuiInset = true
     })
     
@@ -30770,7 +30771,7 @@ Xan.AntiDetect = Xan.EnableGhostMode
 _G.Xan = Xan
 
 
--- UI Library loaded
+-- UI Library loaded, Xan is now available
 
 
 
@@ -30788,6 +30789,7 @@ local CoreGui = game:GetService("CoreGui")
 
 local DISCORD_URL = "https://discord.gg/X4H7phPu8P"
 
+-- Device Detection
 local device = "PC"
 if UIS.TouchEnabled and not UIS.KeyboardEnabled then
     device = "Mobile"
@@ -30795,22 +30797,34 @@ elseif UIS.GamepadEnabled then
     device = "Console"
 end
 
+-- Executor Detection
 local executor = "Unknown"
-if identifyexecutor then executor = identifyexecutor()
-elseif syn then executor = "Synapse X"
-elseif KRNL_LOADED then executor = "Krnl"
-elseif fluxus then executor = "Fluxus"
-elseif is_sirhurt_closure then executor = "SirHurt"
-elseif OXYGEN then executor = "Oxygen U"
-elseif Delta then executor = "Delta"
-elseif Codex then executor = "Codex" end
+if identifyexecutor then
+    executor = identifyexecutor()
+elseif syn then
+    executor = "Synapse X"
+elseif KRNL_LOADED then
+    executor = "Krnl"
+elseif fluxus then
+    executor = "Fluxus"
+elseif is_sirhurt_closure then
+    executor = "SirHurt"
+elseif OXYGEN then
+    executor = "Oxygen U"
+elseif Delta then
+    executor = "Delta"
+elseif Codex then
+    executor = "Codex"
+end
 
+-- Game Name
 local gameName = "Unknown"
 pcall(function()
     local info = MarketplaceService:GetProductInfo(game.PlaceId)
     if info and info.Name then gameName = info.Name end
 end)
 
+-- Use the UI Library (Xan is already loaded above)
 local UI = Xan
 
 function CreateMainWindow()
@@ -31407,8 +31421,10 @@ Join discord for more information!
     BallTab:AddSection("Ball Hacks")
 
     local fbHitbox       = nil
+    local rgbOn          = false
     local hitboxSz       = 2.5
     local hitboxInterval = 1
+    local ballVisible    = true
 
     local function findHitbox()
         if fbHitbox and fbHitbox.Parent and fbHitbox:IsDescendantOf(game.Workspace) then
@@ -31432,75 +31448,78 @@ Join discord for more information!
     local function updateHitbox()
         local hb = findHitbox()
         if hb then
-            hb.Size = Vector3.new(hitboxSz, hitboxSz, hitboxSz)
-            hb.Transparency = 1
-            hb.CanCollide = true
+            hb.Size        = Vector3.new(hitboxSz, hitboxSz, hitboxSz)
+            hb.Transparency = ballVisible and (rgbOn and 0.8 or 0.5) or 1
+            hb.Material    = rgbOn and Enum.Material.Neon or Enum.Material.ForceField
         end
     end
 
-    local ballExpanderSlider = BallTab:AddSlider("Ball Expander", {
+    local ballSlider = BallTab:AddSlider("Ball Expander", {
         Min = 1, Max = 25, Default = 2.5, Increment = 0.1, Flag = "ball_expander"
     }, function(v) hitboxSz = v; updateHitbox() end)
 
-    -- Quick Presets with Keybinds
-    BallTab:AddSection("Quick Presets")
-    
-    local preset1 = 5
-    local preset2 = 10
-    local preset3 = 15
-    local preset1Key = Enum.KeyCode.One
-    local preset2Key = Enum.KeyCode.Two
-    local preset3Key = Enum.KeyCode.Three
+    BallTab:AddSection("Quick Size Keybinds")
 
-    BallTab:AddInput("Preset 1 Size", {
-        Default = "5", Placeholder = "Enter size", Flag = "Preset1Size"
+    local size1 = 5
+    local size2 = 10
+    local size3 = 15
+
+    BallTab:AddInput("Size 1 Value", {
+        Default = "5", Placeholder = "Enter size", Flag = "BallSize1Input"
     }, function(txt)
-        preset1 = tonumber(txt) or 5
-        UI.Success("Preset 1", "Size set to: " .. preset1)
+        size1 = tonumber(txt) or 5
+        UI.Success("Size 1", "Set to: " .. size1)
     end)
 
-    BallTab:AddKeybind("Preset 1 Keybind", {
-        Default = Enum.KeyCode.One, Flag = "Preset1Key"
-    }, function(key)
-        preset1Key = key
+    BallTab:AddKeybind("Size 1 Keybind", {
+        Default = Enum.KeyCode.One, Flag = "BallSize1Keybind"
+    }, function()
+        hitboxSz = size1
+        UI.SetFlag("ball_expander", size1)
+        updateHitbox()
+        UI.Success("Ball Size", "Changed to: " .. size1)
     end)
 
-    BallTab:AddInput("Preset 2 Size", {
-        Default = "10", Placeholder = "Enter size", Flag = "Preset2Size"
+    BallTab:AddInput("Size 2 Value", {
+        Default = "10", Placeholder = "Enter size", Flag = "BallSize2Input"
     }, function(txt)
-        preset2 = tonumber(txt) or 10
-        UI.Success("Preset 2", "Size set to: " .. preset2)
+        size2 = tonumber(txt) or 10
+        UI.Success("Size 2", "Set to: " .. size2)
     end)
 
-    BallTab:AddKeybind("Preset 2 Keybind", {
-        Default = Enum.KeyCode.Two, Flag = "Preset2Key"
-    }, function(key)
-        preset2Key = key
+    BallTab:AddKeybind("Size 2 Keybind", {
+        Default = Enum.KeyCode.Two, Flag = "BallSize2Keybind"
+    }, function()
+        hitboxSz = size2
+        UI.SetFlag("ball_expander", size2)
+        updateHitbox()
+        UI.Success("Ball Size", "Changed to: " .. size2)
     end)
 
-    BallTab:AddInput("Preset 3 Size", {
-        Default = "15", Placeholder = "Enter size", Flag = "Preset3Size"
+    BallTab:AddInput("Size 3 Value", {
+        Default = "15", Placeholder = "Enter size", Flag = "BallSize3Input"
     }, function(txt)
-        preset3 = tonumber(txt) or 15
-        UI.Success("Preset 3", "Size set to: " .. preset3)
+        size3 = tonumber(txt) or 15
+        UI.Success("Size 3", "Set to: " .. size3)
     end)
 
-    BallTab:AddKeybind("Preset 3 Keybind", {
-        Default = Enum.KeyCode.Three, Flag = "Preset3Key"
-    }, function(key)
-        preset3Key = key
+    BallTab:AddKeybind("Size 3 Keybind", {
+        Default = Enum.KeyCode.Three, Flag = "BallSize3Keybind"
+    }, function()
+        hitboxSz = size3
+        UI.SetFlag("ball_expander", size3)
+        updateHitbox()
+        UI.Success("Ball Size", "Changed to: " .. size3)
     end)
 
-    -- Keybind listeners
-    UIS.InputBegan:Connect(function(input, gameProcessed)
-        if gameProcessed then return end
-        if input.KeyCode == preset1Key then
-            UI:SetSliderValue("ball_expander", preset1)
-        elseif input.KeyCode == preset2Key then
-            UI:SetSliderValue("ball_expander", preset2)
-        elseif input.KeyCode == preset3Key then
-            UI:SetSliderValue("ball_expander", preset3)
-        end
+    BallTab:AddSection("Ball Visibility")
+
+    BallTab:AddKeybind("Toggle Ball Visibility", {
+        Default = Enum.KeyCode.V, Flag = "ToggleBallVisibilityKeybind"
+    }, function()
+        ballVisible = not ballVisible
+        updateHitbox()
+        UI.Success("Ball Visibility", ballVisible and "Visible" or "Hidden")
     end)
 
     task.spawn(function()
@@ -32642,4 +32661,5 @@ end)
 })
 end
 
+-- Auto-start the hub
 CreateMainWindow()
